@@ -105,7 +105,7 @@ sub JoinCBStreamLogin
 {
     my $info = shift;
 
-    if (lc Xchat::get_info('network') eq 'freenode')
+    if (lc Xchat::get_info('network') =~ 'freenode')
     {
         if ($info->[1] eq '#cbstream-login')
         {
