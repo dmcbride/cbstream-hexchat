@@ -6,7 +6,7 @@ my $name = 'cbstream';
 my $version = 0.09;
 
 # what I need...
-use YAML::Syck;
+use YAML::Syck qw(LoadFile);
 use Data::Diver qw(DiveVal Dive DiveRef);
 use LWP::Simple qw();
 use XML::Twig;
@@ -21,7 +21,6 @@ open my $log, '>', File::Spec->catfile(
 $log->autoflush();
 sub LOG { print $log scalar localtime, ": ", @_, "\n" }
 LOG 'starting up...';
-use Data::Dumper;
 
 Xchat::register($name, $version, 'CBStream re-writer');
 
@@ -50,7 +49,6 @@ Xchat::register($name, $version, 'CBStream re-writer');
     sub set_conf
     {
         my $val = pop;
-
         DiveVal(_conf, @_) = $val;
     }
 
@@ -71,9 +69,36 @@ Xchat::register($name, $version, 'CBStream re-writer');
     }
 }
 
-Xchat::hook_command('cblog', sub { Xchat::command 'join #cbstream-login'; Xchat::EAT_ALL });
-Xchat::hook_print('You Join', \&JoinCBStreamLogin);
-Xchat::hook_server('PRIVMSG', \&LeaveCBStreamLogin);
+# because hexchat reads $@ even when there is no error, we need to
+# ensure it gets blanked out.
+# ( see https://github.com/hexchat/hexchat/issues/2076 )
+sub make_hook(&)
+{
+    my $func = shift;
+
+    sub {
+        # yeah, yeah... but it's really the same variable!
+        my ($rc, @rc);
+
+        my $success = wantarray ? eval {
+            @rc = $func->(@_);
+            1;
+        } : eval {
+            $rc = $func->(@_);
+            1;
+        };
+
+        # if we succeeded, clobber $@
+        $@ = undef if $success;
+
+        return @rc if wantarray;
+        return $rc;
+    };
+}
+
+Xchat::hook_command('cblog', make_hook { Xchat::command 'join #cbstream-login'; Xchat::EAT_ALL });
+Xchat::hook_print('You Join', make_hook \&JoinCBStreamLogin);
+Xchat::hook_server('PRIVMSG', make_hook \&LeaveCBStreamLogin);
 
 # once logged in, tell cbstream what our id and pw is.
 sub JoinCBStreamLogin
@@ -138,7 +163,7 @@ sub LeaveCBStreamLogin
 }
 
 # check for ignored users...
-Xchat::hook_command('cbig', \&get_ignored);
+Xchat::hook_command('cbig', make_hook \&get_ignored);
 sub get_ignored
 {
     Xchat::print("Gathering ignores from Perlmonks");
@@ -191,7 +216,7 @@ sub get_ignored
     Xchat::EAT_ALL;
 }
 
-Xchat::hook_command('cbignore', \&add_ignore);
+Xchat::hook_command('cbignore', make_hook \&add_ignore);
 sub add_ignore
 {
     my $person = $_[1][1];
@@ -206,7 +231,7 @@ sub add_ignore
     Xchat::EAT_ALL;
 }
 
-Xchat::hook_command('cbunignore', \&rm_ignore);
+Xchat::hook_command('cbunignore', make_hook \&rm_ignore);
 sub rm_ignore
 {
     my $person = $_[1][1];
@@ -221,7 +246,7 @@ sub rm_ignore
     Xchat::EAT_ALL;
 }
 
-Xchat::hook_command('cbmsg', \&cb_msg);
+Xchat::hook_command('cbmsg', make_hook \&cb_msg);
 sub cb_msg
 {
     my $msg = shift;
@@ -235,13 +260,13 @@ sub cb_msg
 
 my $lastalias;
 
-Xchat::hook_server('RAW LINE', \&rewrite_cb, { priority => Xchat::PRI_LOW });
+Xchat::hook_server('RAW LINE', (make_hook \&rewrite_cb), { priority => Xchat::PRI_LOW });
 sub rewrite_cb
 {
     my $msg = shift;
     my $nth = shift;
 
-    if (lc Xchat::get_info('network') eq 'freenode')
+    if (lc (Xchat::get_info('network')||'unknown') eq 'freenode')
     {
         #LOG(@$msg);
         if ($msg->[0] =~ /^:cbstream!/ and
@@ -285,7 +310,7 @@ sub rewrite_cb
     }
 }
 
-Xchat::hook_command('cbset', \&cb_set);
+Xchat::hook_command('cbset', make_hook \&cb_set);
 sub cb_set
 {
     my $msg = shift;
@@ -300,7 +325,7 @@ sub cb_set
     Xchat::EAT_ALL;
 }
 
-Xchat::hook_command('cbget', \&cb_get);
+Xchat::hook_command('cbget', make_hook \&cb_get);
 sub cb_get
 {
     my $msg = shift;
@@ -328,7 +353,7 @@ sub cb_get
     Xchat::EAT_ALL;
 }
 
-Xchat::hook_command('cbrm', \&cb_rm);
+Xchat::hook_command('cbrm', make_hook \&cb_rm);
 sub cb_rm
 {
     my $msg = shift;
