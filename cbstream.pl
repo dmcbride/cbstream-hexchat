@@ -69,6 +69,11 @@ Xchat::register($name, $version, 'CBStream re-writer');
     }
 }
 
+sub get_network_name
+{
+    get_conf('cbstream', 'network_name') || 'freenode';
+}
+
 # because hexchat reads $@ even when there is no error, we need to
 # ensure it gets blanked out.
 # ( see https://github.com/hexchat/hexchat/issues/2076 )
@@ -105,7 +110,7 @@ sub JoinCBStreamLogin
 {
     my $info = shift;
 
-    if (lc Xchat::get_info('network') =~ 'freenode')
+    if (lc Xchat::get_info('network') =~ get_network_name)
     {
         if ($info->[1] eq '#cbstream-login')
         {
@@ -127,7 +132,7 @@ sub LeaveCBStreamLogin
     my $msg = shift;
     my $nth = shift;
 
-    if (lc Xchat::get_info('network') eq 'freenode')
+    if (lc Xchat::get_info('network') =~ get_network_name)
     {
         if ($msg->[0] =~ /^:cbstream!/ and
             $msg->[1] eq 'PRIVMSG' and
@@ -266,7 +271,7 @@ sub rewrite_cb
     my $msg = shift;
     my $nth = shift;
 
-    if (lc (Xchat::get_info('network')||'unknown') eq 'freenode')
+    if (lc (Xchat::get_info('network')||'unknown') =~ get_network_name)
     {
         #LOG(@$msg);
         if ($msg->[0] =~ /^:cbstream!/ and

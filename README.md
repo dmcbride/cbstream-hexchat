@@ -34,8 +34,8 @@ with the /load command).  You're ready to go.
 
 Other than pmpassword and pmuser, other options include:
 
-- item nick-prefix
-- item nick-suffix
+- nick-prefix
+- nick-suffix
 
 Here you can customise how the nicks will appear in Xchat.  I set these this
 way:
@@ -49,7 +49,14 @@ way:
 Then nicks will show up like "[tye]" instead of just "tye".  This makes it
 easier for cut&paste for me.
 
-- item ignore_mode
+- network_name
+
+If your distro has changed the server name to something other than "freenode"
+you can specify it here. This is treated as a regex, which means that as long
+as "freenode" is part of the name, the default will work for you, but if you
+absolutely need to change it, it's configurable here.
+
+- ignore_mode
 
 If you have anyone being ignored, you can actually be told when you receive
 a message from them.  You can set this mode to C<brief> to get a notice
