@@ -6,7 +6,7 @@ my $name = 'cbstream';
 my $version = 0.09;
 
 # what I need...
-use YAML::Syck qw(LoadFile);
+use YAML::Syck qw(LoadFile DumpFile);
 use Data::Diver qw(DiveVal Dive DiveRef);
 use LWP::Simple qw();
 use XML::Twig;
