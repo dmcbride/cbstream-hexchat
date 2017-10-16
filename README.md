@@ -104,7 +104,7 @@ CB applications (such as Full Page Chat).
 
 This will remove an ignore, and remove it from your PM user as well.
 
-### `/cbmsg ###
+### `/cbmsg` ###
 
 This will send a /msg to whomever you specify.  Any private response will
 not be seen in IRC.
